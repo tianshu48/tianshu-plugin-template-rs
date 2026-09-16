@@ -1,0 +1,45 @@
+{
+  "$schema": "./schema/ui.schema.json",
+  "nodes": [
+    {
+      "kind": "echo",
+      "title": "Echo",
+      "category": "echo",
+      "categoryLabel": "Echo",
+      "fields": [
+        { "id": "text", "label": "Text", "type": "string", "default": "" }
+      ]
+    },
+    {
+      "kind": "sum",
+      "title": "Sum",
+      "category": "echo",
+      "categoryLabel": "Echo",
+      "output": "data",
+      "fields": [
+        { "id": "add", "label": "Add", "type": "string", "default": "0" }
+      ]
+    },
+    {
+      "kind": "set_attr",
+      "title": "Set attr",
+      "category": "echo",
+      "categoryLabel": "Echo",
+      "write": "attr",
+      "fields": [
+        { "id": "subject", "label": "Subject", "type": "string", "default": "" },
+        { "id": "attr", "label": "Attr", "type": "string", "default": "hp" },
+        { "id": "value", "label": "Value", "type": "string", "default": "0" }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "id": "place_echo",
+      "title": "Echo",
+      "icon": "icon.svg",
+      "op": "add_node",
+      "args": { "kind": "echo" }
+    }
+  ]
+}

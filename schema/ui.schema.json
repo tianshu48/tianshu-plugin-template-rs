@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Tianshu ui.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["nodes"],
+  "properties": {
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["kind", "title", "category"],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9._-]+$"
+          },
+          "title": { "type": "string", "minLength": 1 },
+          "category": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9._-]+$"
+          },
+          "categoryLabel": { "type": "string" },
+          "output": { "type": "string", "enum": ["none", "data"] },
+          "write": { "type": "string", "enum": ["none", "attr"] },
+          "fields": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["id", "label", "type"],
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "^[A-Za-z0-9._-]+$"
+                },
+                "label": { "type": "string" },
+                "type": { "type": "string", "minLength": 1 },
+                "default": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "tools": {
+      "type": "array",
+      "maxItems": 16,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "title", "icon", "op"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9._-]+$"
+          },
+          "title": { "type": "string", "minLength": 1 },
+          "icon": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9._-]+\\.svg$"
+          },
+          "op": {
+            "type": "string",
+            "enum": [
+              "add_subject",
+              "add_subjects",
+              "add_graph",
+              "move_nodes",
+              "set_attr",
+              "add_node",
+              "set_path",
+              "set_value",
+              "set_formula",
+              "set_roll_call",
+              "set_restrict",
+              "set_anchor",
+              "set_listen",
+              "remove_node",
+              "remove_edge",
+              "check",
+              "bind_mapped",
+              "bind_resource",
+              "connect_pipe",
+              "connect_data",
+              "batch",
+              "undo"
+            ]
+          },
+          "args": { "type": "object" }
+        }
+      }
+    },
+    "$schema": { "type": "string" }
+  }
+}

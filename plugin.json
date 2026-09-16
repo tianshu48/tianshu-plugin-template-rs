@@ -1,0 +1,10 @@
+{
+  "$schema": "./schema/plugin.schema.json",
+  "id": "example.community.template",
+  "title": "Template",
+  "description": "Echo、加法、写属性三个示例节点。",
+  "readme": "USER.md",
+  "icon": "icon.svg",
+  "version": "0.1.0",
+  "abi": 3
+}

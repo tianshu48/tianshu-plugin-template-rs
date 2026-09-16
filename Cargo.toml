@@ -1,0 +1,21 @@
+[package]
+name = "tianshu-plugin-template"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+publish = false
+description = "Tianshu plugin template (WIT guest)"
+
+# Independent repo: do not join the desktop Cargo workspace.
+[workspace]
+
+[features]
+# Host `cargo test` stays native. Enable when packing wasm.
+guest = []
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+serde_json = "1"
+wit-bindgen = "0.46"
