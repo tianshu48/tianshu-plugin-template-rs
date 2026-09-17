@@ -10,4 +10,5 @@ if [ -f icon.svg ]; then cp icon.svg dist/; fi
 wasm=$(find target/wasm32-wasip2/release -maxdepth 1 -name '*.wasm' | head -n 1)
 test -n "$wasm"
 cp "$wasm" dist/plugin.wasm
+node scripts/sign.mjs --pack-only
 echo "packed dist/"

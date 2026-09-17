@@ -21,4 +21,6 @@ if not defined WASM (
   exit /b 1
 )
 copy /Y "%WASM%" dist\plugin.wasm >nul
+node scripts\sign.mjs --pack-only
+if errorlevel 1 exit /b 1
 echo packed dist\

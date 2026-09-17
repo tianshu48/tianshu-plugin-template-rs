@@ -46,7 +46,7 @@ scripts\pack.bat
 
 ## 上架
 
-打一个和 `plugin.json` 里 `version` 对应的 tag（`0.1.0` 打 `v0.1.0`）。工作流会把 `dist/` 打成 zip 挂到 GitHub Release，并写出 `proposals/<id>/<version>.json`。
+打一个和 `plugin.json` 里 `version` 对应的 tag（`0.1.0` 打 `v0.1.0`）。工作流把 `.tsz` 插件包挂到 GitHub Release，并写出 `proposals/<id>/<version>.json`。
 
 插件包本地签名：先在这台电脑上登录天枢，打包后跑 `node scripts/sign.mjs --user-id <天枢用户id>`。Windows 默认是 `%APPDATA%\com.tianshu.desktop\identity\user.sk.hex`。不在默认位置就用 `--sk` 指定路径。签过名的包在 `dist/`。
 

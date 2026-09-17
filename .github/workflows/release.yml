@@ -33,13 +33,13 @@ jobs:
           targets: wasm32-wasip2
       - run: cargo test
       - run: ./scripts/pack.sh
-      - name: Write proposal and zip dist
+      - name: Write proposal
         env:
           TIANSHU_USER_ID: ${{ vars.TIANSHU_USER_ID }}
         run: |
           set -euo pipefail
           python3 <<'PY'
-          import json, os, subprocess, pathlib
+          import json, os, pathlib
           desc = json.loads(pathlib.Path("plugin.json").read_text())
           plugin_id = desc["id"]
           version = desc["version"]
@@ -58,12 +58,13 @@ jobs:
               "user_id": user_id,
               "source": repo,
               "source_tag": tag,
-              "pack_url": f"https://github.com/{repo}/releases/download/{tag}/{plugin_id}-{version}.zip",
+              "pack_url": f"https://github.com/{repo}/releases/download/{tag}/{plugin_id}-{version}.tsz",
           }
           pathlib.Path("proposal.json").write_text(json.dumps(proposal, indent=2) + "\n")
-          zip_name = f"{plugin_id}-{version}.zip"
-          subprocess.check_call(["zip", "-r", zip_name, "dist"])
-          print(f"WROTE {zip_name}")
+          tsz = pathlib.Path("dist") / f"{plugin_id}-{version}.tsz"
+          if not tsz.is_file():
+              raise SystemExit(f"missing {tsz}")
+          print(f"WROTE {tsz}")
           PY
       - name: GitHub Release
         env:
@@ -72,7 +73,9 @@ jobs:
           set -euo pipefail
           id=$(python3 -c 'import json; print(json.load(open("plugin.json"))["id"])')
           ver=$(python3 -c 'import json; print(json.load(open("plugin.json"))["version"])')
-          gh release create "$GITHUB_REF_NAME" "${id}-${ver}.zip" proposal.json --title "$GITHUB_REF_NAME" --generate-notes
+          extra=()
+          if [ -f dist/release.json ]; then extra+=(dist/release.json); fi
+          gh release create "$GITHUB_REF_NAME" "dist/${id}-${ver}.tsz" proposal.json "${extra[@]}" --title "$GITHUB_REF_NAME" --generate-notes
       - name: Open index pull request
         env:
           INDEX_PR_TOKEN: ${{ secrets.INDEX_PR_TOKEN }}

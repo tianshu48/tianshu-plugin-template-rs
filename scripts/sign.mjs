@@ -11,20 +11,39 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join, posix, win32 } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { zstdCompressSync } from "node:zlib";
 
 const PKCS8_PREFIX = Buffer.from("302e020100300506032b657004220420", "hex");
 const SPKI_PREFIX = Buffer.from("302a300506032b6570032100", "hex");
-const MAGIC = Buffer.from("TSP1");
+const MAGIC = Buffer.from("TSP2");
+
+function hintFromPluginJson(pluginJson) {
+  try {
+    const id = JSON.parse(Buffer.from(pluginJson).toString("utf8")).id;
+    if (typeof id !== "string") return Buffer.alloc(0);
+    let s = "";
+    for (const ch of id) {
+      const next = s + ch;
+      if (Buffer.byteLength(next) > 64) break;
+      s = next;
+    }
+    return Buffer.from(s, "utf8");
+  } catch {
+    return Buffer.alloc(0);
+  }
+}
 
 export function packPluginFiles(pluginJson, uiJson, wasm, icon, readme) {
-  const out = [MAGIC];
+  const hint = hintFromPluginJson(pluginJson);
+  const chunks = [];
   for (const c of [pluginJson, uiJson, wasm, icon, readme]) {
     const buf = Buffer.isBuffer(c) ? c : Buffer.from(c);
     const len = Buffer.alloc(4);
     len.writeUInt32BE(buf.length);
-    out.push(len, buf);
+    chunks.push(len, buf);
   }
-  return Buffer.concat(out);
+  const compressed = zstdCompressSync(Buffer.concat(chunks));
+  return Buffer.concat([MAGIC, Buffer.from([1, hint.length]), hint, compressed]);
 }
 
 export function authorIdFromPluginId(id) {
@@ -157,8 +176,7 @@ function loadSeed(path) {
   return seed;
 }
 
-function main() {
-  const root = join(dirname(fileURLToPath(import.meta.url)), "..");
+function writeTsz(root) {
   const dist = join(root, "dist");
   const descPath = existsSync(join(dist, "plugin.json"))
     ? join(dist, "plugin.json")
@@ -179,6 +197,19 @@ function main() {
     desc.icon ? read(desc.icon) : Buffer.alloc(0),
     desc.readme ? read(desc.readme) : Buffer.alloc(0),
   );
+  mkdirSync(dist, { recursive: true });
+  const packName = `${desc.id}-${desc.version}.tsz`;
+  writeFileSync(join(dist, packName), artifact);
+  return { dist, desc, artifact, packName };
+}
+
+function main() {
+  const root = join(dirname(fileURLToPath(import.meta.url)), "..");
+  const { dist, desc, artifact, packName } = writeTsz(root);
+  if (process.argv.includes("--pack-only")) {
+    console.log("wrote", join("dist", packName));
+    return;
+  }
   const envelope = signRelease({
     seed: loadSeed(userSkPathFromArgs(process.argv)),
     pluginId: desc.id,
@@ -188,9 +219,6 @@ function main() {
     userId: userIdFromArgs(process.argv),
     artifact,
   });
-  mkdirSync(dist, { recursive: true });
-  const packName = `${desc.id}-${desc.version}.pack`;
-  writeFileSync(join(dist, packName), artifact);
   writeFileSync(join(dist, "release.json"), `${JSON.stringify(envelope)}\n`);
   console.log("wrote", join("dist", packName));
   console.log("wrote dist/release.json");
