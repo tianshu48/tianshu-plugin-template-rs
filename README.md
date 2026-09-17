@@ -48,7 +48,7 @@ The kind on the graph is `p:<your-id>:<kind>`. `abi-version()` is `3`. `ui-json(
 
 Tag `v` plus the `plugin.json` `version` (`v0.1.0` when version is `0.1.0`). The release workflow zips `dist/` onto the GitHub Release and writes `proposals/<id>/<version>.json`.
 
-Local plugin pack signing: log in on this computer, then `node scripts/sign.mjs` after you pack. Windows default is `%APPDATA%\com.tianshu.desktop\identity\user.sk.hex`. If it is not there, `--sk` takes the path. The signed pack lands in `dist/`.
+Local plugin pack signing: log in on this computer, then `node scripts/sign.mjs --user-id <tianshu user id>` after you pack. Windows default is `%APPDATA%\com.tianshu.desktop\identity\user.sk.hex`. If it is not there, `--sk` takes the path. The signed pack lands in `dist/`.
 
 With `INDEX_PR_TOKEN` the workflow opens a pull request on [tianshu48/tianshu-plugin-index](https://github.com/tianshu48/tianshu-plugin-index) `main`. If you have no token, fork that repo, add the json, and open the PR.
 

@@ -58,9 +58,12 @@ export function publicKeyHexFromSeed(seed) {
   return spki.subarray(-32).toString("hex");
 }
 
-export function signRelease({ seed, pluginId, abi, kind, authorId, artifact }) {
+export function signRelease({ seed, pluginId, abi, kind, authorId, userId, artifact }) {
   if (!Buffer.isBuffer(seed) || seed.length !== 32) {
     throw new Error("need a 32-byte author seed");
+  }
+  if (!/^[0-9a-f]{32}$/.test(userId || "")) {
+    throw new Error("user_id must be 32 lowercase hex chars");
   }
   const payload_json = JSON.stringify({
     manifest: {
@@ -70,6 +73,7 @@ export function signRelease({ seed, pluginId, abi, kind, authorId, artifact }) {
       author_id: authorId,
     },
     artifact_sha256_hex: createHash("sha256").update(artifact).digest("hex"),
+    user_id: userId,
   });
   const signature_hex = sign(
     null,
@@ -98,6 +102,7 @@ export function verifyRelease(envelope, publicKeyHex, artifact) {
     return false;
   }
   const payload = JSON.parse(envelope.payload_json);
+  if (payload.user_id && !/^[0-9a-f]{32}$/.test(payload.user_id)) return false;
   return (
     payload.artifact_sha256_hex ===
     createHash("sha256").update(artifact).digest("hex")
@@ -131,6 +136,16 @@ export function userSkPathFromArgs(argv, opts) {
     return path;
   }
   return identitySkPath(opts);
+}
+
+export function userIdFromArgs(argv) {
+  const i = argv.findIndex((a) => a === "--user-id" || a.startsWith("--user-id="));
+  if (i === -1) throw new Error("need --user-id (Tianshu account id)");
+  const a = argv[i];
+  const id = a.startsWith("--user-id=") ? a.slice(10) : argv[i + 1];
+  if (!id || id.startsWith("-")) throw new Error("need an id after --user-id");
+  if (!/^[0-9a-f]{32}$/.test(id)) throw new Error("user_id must be 32 lowercase hex chars");
+  return id;
 }
 
 function loadSeed(path) {
@@ -170,6 +185,7 @@ function main() {
     abi: desc.abi,
     kind: "wasm",
     authorId: authorIdFromPluginId(desc.id),
+    userId: userIdFromArgs(process.argv),
     artifact,
   });
   mkdirSync(dist, { recursive: true });

@@ -34,6 +34,8 @@ jobs:
       - run: cargo test
       - run: ./scripts/pack.sh
       - name: Write proposal and zip dist
+        env:
+          TIANSHU_USER_ID: ${{ vars.TIANSHU_USER_ID }}
         run: |
           set -euo pipefail
           python3 <<'PY'
@@ -49,9 +51,11 @@ jobs:
           if plugin_id == "example.community.template" or low == "tianshu" or low.startswith("tianshu.") or low.startswith("tianshu-"):
               raise SystemExit(f"id {plugin_id} is not listable")
           repo = os.environ["GITHUB_REPOSITORY"]
+          user_id = os.environ.get("TIANSHU_USER_ID", "").strip().lower()
           proposal = {
               "plugin_id": plugin_id,
               "version": version,
+              "user_id": user_id,
               "source": repo,
               "source_tag": tag,
               "pack_url": f"https://github.com/{repo}/releases/download/{tag}/{plugin_id}-{version}.zip",
@@ -76,6 +80,11 @@ jobs:
           set -euo pipefail
           if [ -z "${INDEX_PR_TOKEN:-}" ]; then
             echo "INDEX_PR_TOKEN unset; skip pull request"
+            exit 0
+          fi
+          uid=$(python3 -c 'import json; print(json.load(open("proposal.json")).get("user_id") or "")')
+          if [ -z "$uid" ]; then
+            echo "TIANSHU_USER_ID unset; skip pull request"
             exit 0
           fi
           id=$(python3 -c 'import json; print(json.load(open("proposal.json"))["plugin_id"])')
