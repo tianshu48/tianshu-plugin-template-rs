@@ -1,0 +1,94 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check plugin id and tag
+        run: |
+          python3 <<'PY'
+          import json, os, pathlib
+          desc = json.loads(pathlib.Path("plugin.json").read_text())
+          plugin_id = desc["id"]
+          version = desc["version"]
+          tag = os.environ.get("GITHUB_REF_NAME", "")
+          want = "v" + version
+          if tag != want:
+              raise SystemExit(f"tag {tag} != {want}")
+          low = plugin_id.lower()
+          if plugin_id == "example.community.template" or low == "tianshu" or low.startswith("tianshu.") or low.startswith("tianshu-"):
+              raise SystemExit(f"id {plugin_id} is not listable")
+          PY
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-wasip2
+      - run: cargo test
+      - run: ./scripts/pack.sh
+      - name: Write proposal and zip dist
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          import json, os, subprocess, pathlib
+          desc = json.loads(pathlib.Path("plugin.json").read_text())
+          plugin_id = desc["id"]
+          version = desc["version"]
+          tag = os.environ["GITHUB_REF_NAME"]
+          want = "v" + version
+          if tag != want:
+              raise SystemExit(f"tag {tag} != {want}")
+          low = plugin_id.lower()
+          if plugin_id == "example.community.template" or low == "tianshu" or low.startswith("tianshu.") or low.startswith("tianshu-"):
+              raise SystemExit(f"id {plugin_id} is not listable")
+          repo = os.environ["GITHUB_REPOSITORY"]
+          proposal = {
+              "plugin_id": plugin_id,
+              "version": version,
+              "source": repo,
+              "source_tag": tag,
+              "pack_url": f"https://github.com/{repo}/releases/download/{tag}/{plugin_id}-{version}.zip",
+          }
+          pathlib.Path("proposal.json").write_text(json.dumps(proposal, indent=2) + "\n")
+          zip_name = f"{plugin_id}-{version}.zip"
+          subprocess.check_call(["zip", "-r", zip_name, "dist"])
+          print(f"WROTE {zip_name}")
+          PY
+      - name: GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          id=$(python3 -c 'import json; print(json.load(open("plugin.json"))["id"])')
+          ver=$(python3 -c 'import json; print(json.load(open("plugin.json"))["version"])')
+          gh release create "$GITHUB_REF_NAME" "${id}-${ver}.zip" proposal.json --title "$GITHUB_REF_NAME" --generate-notes
+      - name: Open index pull request
+        env:
+          INDEX_PR_TOKEN: ${{ secrets.INDEX_PR_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${INDEX_PR_TOKEN:-}" ]; then
+            echo "INDEX_PR_TOKEN unset; skip pull request"
+            exit 0
+          fi
+          id=$(python3 -c 'import json; print(json.load(open("proposal.json"))["plugin_id"])')
+          ver=$(python3 -c 'import json; print(json.load(open("proposal.json"))["version"])')
+          work=$(mktemp -d)
+          git clone --depth 1 "https://x-access-token:${INDEX_PR_TOKEN}@github.com/tianshu48/tianshu-plugin-index.git" "$work/index"
+          branch="proposal-${id}-${ver}"
+          git -C "$work/index" checkout -b "$branch"
+          mkdir -p "$work/index/proposals/${id}"
+          cp proposal.json "$work/index/proposals/${id}/${ver}.json"
+          git -C "$work/index" add "proposals/${id}/${ver}.json"
+          git -C "$work/index" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" -c user.name="github-actions[bot]" \
+            commit -m "Propose ${id} ${ver}"
+          git -C "$work/index" push -u origin "$branch"
+          GH_TOKEN="$INDEX_PR_TOKEN" gh pr create -R tianshu48/tianshu-plugin-index --base main --head "$branch" \
+            --title "Propose ${id} ${ver}" --body "Release ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/tag/${GITHUB_REF_NAME}"

@@ -2,7 +2,7 @@
 
 [中文](README.zh.md)
 
-This repository is a complete plugin you can install in Tianshu. The guest is Rust. You do not need the WIT repo: `wit/`, `schema/`, and `docs/` are vendored here. `scripts/pack.sh` (on Windows, `scripts\pack.bat`) writes `plugin.wasm`, `plugin.json`, `ui.json`, `USER.md`, and `icon.svg` into `dist/`.
+This is a Rust plugin for Tianshu. `scripts/pack.sh` (on Windows, `scripts\pack.bat`) writes `plugin.wasm`, `plugin.json`, `ui.json`, `USER.md`, and `icon.svg` into `dist/`.
 
 ## Run it first
 
@@ -43,6 +43,14 @@ In Tianshu: Settings → Plugins → Add local plugin, and choose this repo's `d
 6. To give the plugin its own graphs, call `add_graph` from `on_tool`, keep the returned `id`, then `add_node` with `graphId`. The host puts those graphs under `plugin/<your id>`, at most 4. Details: [host.apply](docs/host-apply.md) Graphs.
 
 The kind on the graph is `p:<your-id>:<kind>`. `abi-version()` is `3`. `ui-json()` returns `ui.json`.
+
+## Catalog
+
+Tag `v` plus the `plugin.json` `version` (`v0.1.0` when version is `0.1.0`). The release workflow packs `dist/`, puts a zip on the GitHub Release, and writes `proposals/<id>/<version>.json`.
+
+With `INDEX_PR_TOKEN` it opens a pull request against [tianshu48/tianshu-plugin-index](https://github.com/tianshu48/tianshu-plugin-index) `main`. Without that token, fork the index, add the same json, and open the PR.
+
+`example.community.template` and ids that start with `tianshu` are rejected. After the PR is approved, the index asks for a signed pack if the upload is unsigned; a pack that is already signed is merged on approval.
 
 ## plugin.json
 

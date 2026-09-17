@@ -2,7 +2,7 @@
 
 [English](README.md)
 
-这份仓库本身就是一个能装进天枢的完整插件。Guest 用 Rust。不需要再克隆 WIT 仓：`wit/`、`schema/`、`docs/` 已经钉在这里。`scripts/pack.sh`（Windows 上是 `scripts\pack.bat`）在 `dist/` 放下 `plugin.wasm`、`plugin.json`、`ui.json`、`USER.md`、`icon.svg`。
+这是一个 Rust 插件，可以装进天枢。`scripts/pack.sh`（Windows 上是 `scripts\pack.bat`）在 `dist/` 放下 `plugin.wasm`、`plugin.json`、`ui.json`、`USER.md`、`icon.svg`。
 
 ## 先跑通
 
@@ -43,6 +43,14 @@ scripts\pack.bat
 6. 工具栏若要自己的图：在 `on_tool` 里 `add_graph`，记下返回的 `id`，再 `add_node` 带 `graphId`。图落在 `plugin/<你的id>` 下，最多 4 张。细则见 [host.apply](docs/host-apply.zh.md) 的「图」。
 
 图上完整 kind 是 `p:<你的id>:<kind>`。`abi-version()` 为 `3`。`ui-json()` 返回的就是 `ui.json`。
+
+## 上架
+
+打一个和 `plugin.json` 里 `version` 对应的 tag（`0.1.0` 打 `v0.1.0`）。Release 工作流会打 `dist/`，打成 zip 挂到 GitHub Release，并写出 `proposals/<id>/<version>.json`。
+
+有 `INDEX_PR_TOKEN` 时，工作流会对 [tianshu48/tianshu-plugin-index](https://github.com/tianshu48/tianshu-plugin-index) 的 `main` 开 PR。没有 token 就 fork 索引仓，把同一份 json 放进去再开。
+
+`example.community.template` 和以 `tianshu` 开头的 id 会被拒绝。审核通过后，若包还没签名，索引会向你要带签名的插件包；已经签过名的，通过后直接合并。
 
 ## plugin.json
 
