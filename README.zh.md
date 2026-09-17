@@ -46,11 +46,13 @@ scripts\pack.bat
 
 ## 上架
 
-打一个和 `plugin.json` 里 `version` 对应的 tag（`0.1.0` 打 `v0.1.0`）。Release 工作流会打 `dist/`，打成 zip 挂到 GitHub Release，并写出 `proposals/<id>/<version>.json`。
+打一个和 `plugin.json` 里 `version` 对应的 tag（`0.1.0` 打 `v0.1.0`）。工作流会把 `dist/` 打成 zip 挂到 GitHub Release，并写出 `proposals/<id>/<version>.json`。
 
-有 `INDEX_PR_TOKEN` 时，工作流会对 [tianshu48/tianshu-plugin-index](https://github.com/tianshu48/tianshu-plugin-index) 的 `main` 开 PR。没有 token 就 fork 索引仓，把同一份 json 放进去再开。
+插件包本地签名：先在这台电脑上登录天枢，打包后跑 `node scripts/sign.mjs`。Windows 默认是 `%APPDATA%\com.tianshu.desktop\identity\user.sk.hex`。不在默认位置就用 `--sk` 指定路径。签过名的包在 `dist/`。
 
-`example.community.template` 和以 `tianshu` 开头的 id 会被拒绝。审核通过后，若包还没签名，索引会向你要带签名的插件包；已经签过名的，通过后直接合并。
+有 `INDEX_PR_TOKEN` 时，工作流会对 [tianshu48/tianshu-plugin-index](https://github.com/tianshu48/tianshu-plugin-index) 的 `main` 开 PR。没有 token 就 fork 索引仓，把那份 json 放进去再开。
+
+`example.community.template` 和以 `tianshu` 开头的 id 会被拒绝。审核通过后，没签名的包还会再要你签一份；已经签过的直接合并。
 
 ## plugin.json
 

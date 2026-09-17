@@ -46,11 +46,13 @@ The kind on the graph is `p:<your-id>:<kind>`. `abi-version()` is `3`. `ui-json(
 
 ## Catalog
 
-Tag `v` plus the `plugin.json` `version` (`v0.1.0` when version is `0.1.0`). The release workflow packs `dist/`, puts a zip on the GitHub Release, and writes `proposals/<id>/<version>.json`.
+Tag `v` plus the `plugin.json` `version` (`v0.1.0` when version is `0.1.0`). The release workflow zips `dist/` onto the GitHub Release and writes `proposals/<id>/<version>.json`.
 
-With `INDEX_PR_TOKEN` it opens a pull request against [tianshu48/tianshu-plugin-index](https://github.com/tianshu48/tianshu-plugin-index) `main`. Without that token, fork the index, add the same json, and open the PR.
+Local plugin pack signing: log in on this computer, then `node scripts/sign.mjs` after you pack. Windows default is `%APPDATA%\com.tianshu.desktop\identity\user.sk.hex`. If it is not there, `--sk` takes the path. The signed pack lands in `dist/`.
 
-`example.community.template` and ids that start with `tianshu` are rejected. After the PR is approved, the index asks for a signed pack if the upload is unsigned; a pack that is already signed is merged on approval.
+With `INDEX_PR_TOKEN` the workflow opens a pull request on [tianshu48/tianshu-plugin-index](https://github.com/tianshu48/tianshu-plugin-index) `main`. If you have no token, fork that repo, add the json, and open the PR.
+
+`example.community.template` and ids that start with `tianshu` are rejected. After approval, an unsigned pack gets a request to sign; a signed pack is merged.
 
 ## plugin.json
 
